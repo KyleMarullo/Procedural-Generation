@@ -1,12 +1,17 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityEngine.UI;
 
 public class World: MonoBehaviour {
 
 	public Sprite tile;
 
+	public Text TileText;
+
+	public Camera cam;
 	Tile[,] tiles;
 	GameObject[,]tiles_go;
+	Tile tileinfo;
 
 	public int width;
 	public int height;
@@ -15,6 +20,7 @@ public class World: MonoBehaviour {
 	public string seed;
 
 	public bool userandomseed;
+	public bool makeisland;
 
 	public Color savanah;
 	public Color forest;
@@ -25,15 +31,6 @@ public class World: MonoBehaviour {
 	public Color mountin;
 
 	float value = 0;
-
-	int numofdeepwater = 0;
-	int numofshallowwater = 0;
-	int numofbeach = 0;
-	int numofgrass = 0;
-	int numofsavannah = 0;
-	int numofforest = 0;
-	int numofmountin = 0;
-
 
 	public void Start() {
 
@@ -51,34 +48,63 @@ public class World: MonoBehaviour {
 				tiles [i, j] = new Tile (i, j);
 				GameObject tile_go = new GameObject();
 				tile_go.name = "Tile_" + i + "_" + j;
+				tile_go.layer = 9;
+				tile_go.transform.parent = this.gameObject.transform;
 				SpriteRenderer tile_sr = tile_go.AddComponent<SpriteRenderer>();
 				tile_sr.sprite = tile;
 				tile_go.transform.position = new Vector2 (i, j);
+				tile_go.AddComponent<BoxCollider> ();
+				tile_go.AddComponent<Rigidbody> ();
+				tile_go.GetComponent <Rigidbody> ().isKinematic = true;
 				tiles_go [i, j] = tile_go;
 
 			}
 		}
-
-		setCamera ();
+			
 		GenerateMoistureMap ();
 		GenerateHeightmap ();
 		DisplayBiomes ();
 	}
 
+	public void Update(){
+		if (Input.GetButtonDown ("Fire1")) {
+			Debug.Log ("Left Click Pressed!");
+			Ray ray = Camera.main.ScreenPointToRay (Input.mousePosition);
+			RaycastHit hit;
+
+			if(Physics.Raycast(ray,out hit,100)){
+				for(int i = 0; i < width; i++){
+					for (int j = 0; j < height; j++) {
+						if (tiles_go [i, j].name != hit.transform.gameObject.name) {
+							
+						} else {
+							tileinfo = tiles[i, j];
+							Debug.Log (tileinfo.getType ());
+							TileText.text = tileinfo.ToString ();
+							}
+						}
+					}
+				}
+			}
+		}
+
 	public void GenerateHeightmap(){
 		for (int i = 0; i < width; i++) {
 			for(int j =0; j< height; j++){
 				
-				value = Mathf.PerlinNoise (((width - i) - seedvalue) / 75f,((height - j) - seedvalue) / 75f) * 1f  + Mathf.PerlinNoise (((4*i- width) - seedvalue) / 20f,((4*j - height) - seedvalue) / 20f) * .25f;
+				value = Mathf.PerlinNoise (((width - i) - seedvalue) / 75f,((height - j) - seedvalue) / 75f) * 1f  + Mathf.PerlinNoise (((4*i- width) - seedvalue) / 50f,((4*j - height) - seedvalue) / 50f) * .25f;
 				value /= (1.0f + .25f);
-				Mathf.Pow (value, 1.3f);
+				//Mathf.Pow (value, 1.3f);
 				//Euclidean calculation of distance from the center
-				float d =2 * Mathf.Sqrt(Mathf.Pow((i - (width/2)),2) + Mathf.Pow((j - (height/2)),2));
-				//Normalization of the distance
-				d = (d - 0 )/( width - 0 );
-				//calculate the elevation
-				value = ((value) + .3f) - (1f - .8f + Mathf.Pow((d), 5f));
-				Debug.Log (value);
+				if (makeisland) {
+					float d = 2 * Mathf.Sqrt (Mathf.Pow ((i - (width / 2)), 2) + Mathf.Pow ((j - (height / 2)), 2));
+					//Normalization of the distance
+					d = (d - 0) / (width - 0);
+					//calculate the elevation
+					value = ((value) + .3f) - (1f - .8f + Mathf.Pow ((d), 5f));
+				} else {
+					Mathf.Pow (value, 1.3f);
+				}
 				//set the biome
 				tiles[i, j].setheightvalue(value);
 				tiles [i, j].biomegen ();
@@ -134,9 +160,15 @@ public class World: MonoBehaviour {
 		}
 	}
 
-	public void setCamera(){
-		Camera main = Camera.main;
-		main.transform.position = new Vector3 (width/2, height/2, -10f);
-		main.orthographicSize = 120f;
+	public Tile GetTileAt(int x,int y){
+		return tiles[x,y];
 	}
+
+	public void generateArea(){
+		Area location = new Area ();
+
+
+	}
+
+
 }
