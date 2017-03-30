@@ -1,10 +1,12 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityEngine.UI;
 
 public class Tile  {
 
 	public enum TileType {DeepWater, ShallowWater,Beach,Grassland,Savannah, Forest, Mountin};
 
+	string text;
 	TileType type;
 	int x;
 	int y;
@@ -85,5 +87,11 @@ public class Tile  {
 		else{
 			this.type = TileType.Mountin;
 		}
+	}
+
+	public override string ToString(){
+
+		text = "Tile:" + X + "," + Y + " is " + type;
+		return text;
 	}
 }
